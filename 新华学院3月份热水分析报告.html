@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新华学院3月份热水系统分析报告</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --primary-light: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: var(--text); padding: 24px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 32px; padding: 32px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 16px; color: white; box-shadow: var(--shadow-lg); }
+        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .header .subtitle { font-size: 14px; opacity: 0.9; }
+        .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
+        .summary-card { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); text-align: center; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .summary-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--primary); }
+        .summary-card:nth-child(2)::before { background: var(--success); }
+        .summary-card:nth-child(3)::before { background: var(--warning); }
+        .summary-card:nth-child(4)::before { background: var(--danger); }
+        .summary-card .icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 24px; }
+        .summary-card:nth-child(1) .icon { background: #dbeafe; }
+        .summary-card:nth-child(2) .icon { background: #d1fae5; }
+        .summary-card:nth-child(3) .icon { background: #fef3c7; }
+        .summary-card:nth-child(4) .icon { background: #fee2e2; }
+        .summary-card .label { color: var(--text-light); font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+        .summary-card .value { font-size: 28px; font-weight: 700; color: var(--primary); }
+        .summary-card:nth-child(2) .value { color: var(--success); }
+        .summary-card:nth-child(3) .value { color: var(--warning); }
+        .summary-card:nth-child(4) .value { color: var(--danger); }
+        .tabs { display: flex; background: var(--card-bg); border-radius: 12px; overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow); padding: 6px; gap: 4px; flex-wrap: wrap; }
+        .tab { flex: 1; min-width: 120px; padding: 14px 20px; text-align: center; cursor: pointer; background: transparent; border: none; font-size: 14px; font-weight: 500; color: var(--text-light); border-radius: 8px; transition: all 0.2s; }
+        .tab:hover { background: var(--bg); color: var(--text); }
+        .tab.active { background: var(--primary); color: white; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chart-container { background: var(--card-bg); padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .chart-title { font-size: 16px; color: var(--text); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--primary); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .chart-title::before { content: ''; width: 4px; height: 20px; background: var(--primary); border-radius: 2px; }
+        .chart-box { width: 100%; height: 380px; }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+        .analysis-section { background: var(--card-bg); padding: 28px; border-radius: 12px; margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .analysis-section h3 { color: var(--primary); margin-bottom: 16px; font-size: 18px; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .analysis-section p { line-height: 1.8; margin-bottom: 12px; color: var(--text); font-size: 14px; }
+        .analysis-section h4 { color: var(--text); margin: 16px 0 8px; font-size: 15px; font-weight: 600; }
+        .highlight-box { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 16px 20px; border-radius: 8px; margin: 16px 0; border-left: 4px solid var(--warning); }
+        .highlight-box.danger { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left-color: var(--danger); }
+        .highlight-box.success { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-left-color: var(--success); }
+        .highlight-box.info { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left-color: var(--primary); }
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 16px 0; font-size: 13px; }
+        .data-table th { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 14px 16px; text-align: left; font-weight: 600; }
+        .data-table th:first-child { border-radius: 8px 0 0 0; }
+        .data-table th:last-child { border-radius: 0 8px 0 0; }
+        .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text); }
+        .data-table tr:hover td { background: #f8fafc; }
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .tag-danger { background: #fee2e2; color: #dc2626; }
+        .tag-warning { background: #fef3c7; color: #d97706; }
+        .tag-success { background: #d1fae5; color: #059669; }
+        .tag-primary { background: #dbeafe; color: #1d4ed8; }
+        .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+        @media (max-width: 768px) { .stat-row { grid-template-columns: 1fr; } }
+        .stat-item { background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; }
+        .stat-item .num { font-size: 24px; font-weight: 700; color: var(--primary); }
+        .stat-item .num.danger { color: var(--danger); }
+        .stat-item .num.warning { color: var(--warning); }
+        .stat-item .num.success { color: var(--success); }
+        .stat-item .desc { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .question-box { background: #f8fafc; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 3px solid var(--primary); }
+        .question-box h4 { color: var(--primary); font-size: 14px; margin-bottom: 8px; }
+        @media (max-width: 1200px) { .summary { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .summary { grid-template-columns: 1fr; } .header h1 { font-size: 24px; } .tabs { flex-direction: column; } .tab { width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>新华学院3月份热水系统分析报告</h1>
+            <p class="subtitle">数据时间: 2026年3月 | LLM智能分析</p>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card">
+                <div class="icon">📋</div>
+                <div class="label">总订单数</div>
+                <div class="value">87,679</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon">💰</div>
+                <div class="label">总消费金额</div>
+                <div class="value">95,700.70</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon">👥</div>
+                <div class="label">用户总数</div>
+                <div class="value">3,958</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon">📊</div>
+                <div class="label">人均消费</div>
+                <div class="value">24.17</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('overview')">数据概览</div>
+            <div class="tab" onclick="switchTab('trend')">消费趋势</div>
+            <div class="tab" onclick="switchTab('time')">时段分析</div>
+            <div class="tab" onclick="switchTab('water')">用水量分析</div>
+            <div class="tab" onclick="switchTab('anomaly')">异常检测</div>
+            <div class="tab" onclick="switchTab('insights')">分析结论</div>
+        </div>
+
+        <div id="overview" class="tab-content active">
+            <div class="analysis-section">
+                <h3>📊 数据概览</h3>
+                <p>本报告基于新华学院3月份热水消费数据进行分析，数据涵盖2026年3月1日至3月31日期间的全部热水使用记录。</p>
+                <div class="highlight-box info">
+                    <strong>关键发现：</strong>3月份日均消费3,041.58元，日均订单2,794笔，日均活跃用户2,465人。消费时段高度集中在晚间19-23点，占全天订单量的65%以上。
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container">
+                    <div class="chart-title">3月份消费日历</div>
+                    <div id="calendarChart" class="chart-box"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">周消费分布</div>
+                    <div id="weekChart" class="chart-box"></div>
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <h3>📈 3月份核心指标</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>指标</th>
+                            <th>数值</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>总消费天数</td>
+                            <td>31天</td>
+                            <td>3月份完整数据</td>
+                        </tr>
+                        <tr>
+                            <td>日均消费</td>
+                            <td>3,041.58元</td>
+                            <td>包含所有时段</td>
+                        </tr>
+                        <tr>
+                            <td>日均订单</td>
+                            <td>2,794笔</td>
+                            <td>每笔订单平均1.09元</td>
+                        </tr>
+                        <tr>
+                            <td>日均活跃用户</td>
+                            <td>2,465人</td>
+                            <td>占总有用户62.3%</td>
+                        </tr>
+                        <tr>
+                            <td>人均消费</td>
+                            <td>24.17元</td>
+                            <td>按总用户数计算</td>
+                        </tr>
+                        <tr>
+                            <td>人均用水量</td>
+                            <td>0.97吨</td>
+                            <td>按25元/吨计算</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="trend" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">每日消费趋势</div>
+                <div id="dailyTrendChart" class="chart-box"></div>
+            </div>
+            <div class="analysis-section">
+                <h3>📉 趋势分析</h3>
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="num">4019.67元</div>
+                        <div class="desc">最高消费日 (3月10日)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="num danger">1580.19元</div>
+                        <div class="desc">最低消费日 (3月1日)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="num warning">2.54倍</div>
+                        <div class="desc">峰谷比</div>
+                    </div>
+                </div>
+                <p>3月份消费呈现明显波动特征：</p>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li><strong>月初低点</strong>：3月1日消费最低（1580.19元），可能与开学初期学生返校尚未完成有关</li>
+                    <li><strong>月中高峰</strong>：3月9-10日达到峰值，单日消费突破4000元</li>
+                    <li><strong>月末回落</strong>：3月下旬至月末，消费趋于稳定，日均约3000-3400元</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>运营建议：</strong>建议在消费高峰期（3月9-10日、3月16-18日、3月23-26日）加强设备巡检，确保热水供应稳定。
+                </div>
+            </div>
+        </div>
+
+        <div id="time" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">24小时消费分布</div>
+                <div id="hourlyChart" class="chart-box"></div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-container">
+                    <div class="chart-title">时段热力图</div>
+                    <div id="heatmapChart" class="chart-box"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">消费金额分布</div>
+                    <div id="amountPieChart" class="chart-box"></div>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h3>⏰ 时段分析结论</h3>
+                <div class="highlight-box success">
+                    <strong>核心发现：热水使用呈现明显的"晚高峰"特征</strong>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>时段</th>
+                            <th>订单数</th>
+                            <th>消费占比</th>
+                            <th>特征</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>19:00-23:00</td>
+                            <td>55,363</td>
+                            <td>63.1%</td>
+                            <td><span class="tag tag-danger">黄金时段</span></td>
+                        </tr>
+                        <tr>
+                            <td>20:00-22:00</td>
+                            <td>46,598</td>
+                            <td>53.2%</td>
+                            <td><span class="tag tag-danger">超级高峰</span></td>
+                        </tr>
+                        <tr>
+                            <td>0:00-6:00</td>
+                            <td>7,055</td>
+                            <td>8.0%</td>
+                            <td><span class="tag tag-primary">深夜低谷</span></td>
+                        </tr>
+                        <tr>
+                            <td>6:00-12:00</td>
+                            <td>2,761</td>
+                            <td>3.1%</td>
+                            <td><span class="tag tag-warning">上午低谷</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h4>人均用水时段分布</h4>
+                <p>人均用水量约0.97吨/月，按单次洗澡用水20-30升计算，相当于人均每月洗澡约32-48次，日均1-1.6次，符合学生正常生活习惯。</p>
+            </div>
+        </div>
+
+        <div id="anomaly" class="tab-content">
+            <div class="analysis-section">
+                <h3>🚨 异常检测分析</h3>
+                <div class="highlight-box danger">
+                    <strong>以下发现需重点关注</strong>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container">
+                    <div class="chart-title">最低消费宿舍TOP10</div>
+                    <div id="lowestRoomsChart" class="chart-box"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">异常高消费订单分布</div>
+                    <div id="highAmountChart" class="chart-box"></div>
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <h4>🔍 异常类型识别</h4>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>异常类型</th>
+                            <th>检出数量</th>
+                            <th>风险等级</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>高消费用户(>50元/月)</td>
+                            <td>1,547人</td>
+                            <td><span class="tag tag-warning">中</span></td>
+                            <td>可能存在浪费或设备异常</td>
+                        </tr>
+                        <tr>
+                            <td>单笔高消费(>5元)</td>
+                            <td>892笔</td>
+                            <td><span class="tag tag-danger">高</span></td>
+                            <td>可能存在漏水或长流水</td>
+                        </tr>
+                        <tr>
+                            <td>深夜消费(0-5点)</td>
+                            <td>8,055笔</td>
+                            <td><span class="tag tag-primary">低</span></td>
+                            <td>正常夜间洗澡需求</td>
+                        </tr>
+                        <tr>
+                            <td>异常房间(<10元/月)</td>
+                            <td>101间</td>
+                            <td><span class="tag tag-warning">中</span></td>
+                            <td>设备故障或数据异常</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="analysis-section">
+                <h4>⚠️ 重点关注问题</h4>
+                <div class="question-box">
+                    <h4>1. 高消费用户分析</h4>
+                    <p>消费最高的10位用户月消费在107-154元之间，人均洗澡次数约50次/月，日均1.6次，属于正常范围上限，但建议关注是否存在设备计量异常。</p>
+                </div>
+                <div class="question-box">
+                    <h4>2. 单笔异常高消费</h4>
+                    <p>检测到892笔超过5元的订单，其中部分可能涉及设备漏水或学生长时间开水不关的情况。建议对单笔超过10元的订单进行逐一排查。</p>
+                </div>
+                <div class="question-box">
+                    <h4>3. 异常房间分析</h4>
+                    <p>检测到 <strong>101间</strong> 月消费不足10元的异常房间，主要分布在23栋各楼层。这些房间可能存在设备故障、水表异常或长期无人居住等情况，建议逐一排查。</p>
+                    <ul style="margin-left: 20px; line-height: 1.8; margin-top: 12px;">
+                        <li>消费0元房间：0间</li>
+                        <li>消费0.01-1元：7间</li>
+                        <li>消费1-5元：49间</li>
+                        <li>消费5-10元：45间</li>
+                    </ul>
+                </div>
+                <div class="question-box">
+                    <h4>4. 设备运行稳定性</h4>
+                    <p>数据中设备名称字段缺失较多（约45%），可能影响设备故障追踪。建议完善设备信息采集。</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="water" class="tab-content">
+            <div class="analysis-section">
+                <h3>🚿 用水量分析</h3>
+                <div class="highlight-box info">
+                    <strong>基于热水单价25元/吨计算用水量</strong>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">各楼栋用水量统计</div>
+                <div id="buildingWaterChart" class="chart-box"></div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container">
+                    <div class="chart-title">楼栋人均用水量</div>
+                    <div id="buildingPerCapitaChart" class="chart-box"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">用水量占比分布</div>
+                    <div id="waterPieChart" class="chart-box"></div>
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <h3>📅 AI节假日判断与下周用水量预测</h3>
+                <div class="highlight-box">
+                    <strong>下周（4月1日-4月7日）节假日分析</strong>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>星期</th>
+                            <th>类型</th>
+                            <th>预测用水量(吨)</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>4月1日</td>
+                            <td>周二</td>
+                            <td><span class="tag tag-primary">上课日</span></td>
+                            <td>85-95</td>
+                            <td>正常上课日</td>
+                        </tr>
+                        <tr>
+                            <td>4月2日</td>
+                            <td>周三</td>
+                            <td><span class="tag tag-primary">上课日</span></td>
+                            <td>85-95</td>
+                            <td>正常上课日</td>
+                        </tr>
+                        <tr>
+                            <td>4月3日</td>
+                            <td>周四</td>
+                            <td><span class="tag tag-warning">清明前夕</span></td>
+                            <td>75-85</td>
+                            <td>部分学生提前出行</td>
+                        </tr>
+                        <tr>
+                            <td>4月4日</td>
+                            <td>周五</td>
+                            <td><span class="tag tag-danger">清明假期</span></td>
+                            <td>40-55</td>
+                            <td>假期大幅下降</td>
+                        </tr>
+                        <tr>
+                            <td>4月5日</td>
+                            <td>周六</td>
+                            <td><span class="tag tag-danger">清明假期</span></td>
+                            <td>70-85</td>
+                            <td>留校学生使用</td>
+                        </tr>
+                        <tr>
+                            <td>4月6日</td>
+                            <td>周日</td>
+                            <td><span class="tag tag-warning">假期返校</span></td>
+                            <td>80-95</td>
+                            <td>学生陆续返校</td>
+                        </tr>
+                        <tr>
+                            <td>4月7日</td>
+                            <td>周一</td>
+                            <td><span class="tag tag-primary">上课日</span></td>
+                            <td>90-100</td>
+                            <td>恢复正常</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="highlight-box success">
+                    <strong>预测结论：</strong>下周总用水量预计 525-600 吨，较3月份周均下降 8-12%，主要受清明节假期影响。
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <h3>📊 楼栋用水量详情</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>楼栋</th>
+                            <th>用水量(吨)</th>
+                            <th>用户数</th>
+                            <th>人均用水量(吨)</th>
+                            <th>消费总额(元)</th>
+                            <th>订单数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>东莞校区23栋</td>
+                            <td>3,828.03</td>
+                            <td>3,958</td>
+                            <td>0.97</td>
+                            <td>95,700.70</td>
+                            <td>87,679</td>
+                        </tr>
+                        <tr>
+                            <td>东莞校区21栋</td>
+                            <td>少量</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>东莞校区22栋</td>
+                            <td>少量</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 12px; color: var(--text-light); font-size: 13px;">
+                    注：数据显示大部分用户集中在23栋，其他楼栋数据较少，可能与楼栋信息采集不完整有关。
+                </p>
+            </div>
+        </div>
+
+        <div id="insights" class="tab-content">
+            <div class="analysis-section">
+                <h3>💡 运营分析结论与建议</h3>
+                <div class="highlight-box success">
+                    <strong>一、经营表现总结</strong>
+                </div>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li><strong>月营收规模</strong>：3月份热水消费总额95,700.70元，日均3,041.58元</li>
+                    <li><strong>用户活跃度</strong>：3,958名用户中，62.3%在当月有消费记录，活跃度较好</li>
+                    <li><strong>人均贡献</strong>：人均消费24.17元，人均用水量0.97吨</li>
+                </ul>
+            </div>
+
+            <div class="analysis-section">
+                <div class="highlight-box">
+                    <strong>二、存在问题</strong>
+                </div>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li><strong>时段集中度过高</strong>：晚间19-23点订单占比超63%，设备负荷大，存在服务瓶颈风险</li>
+                    <li><strong>异常消费风险</strong>：发现892笔单笔超5元订单，可能存在漏水隐患</li>
+                    <li><strong>数据质量</strong>：设备名称缺失率45%，温度数据完全缺失，影响设备管理</li>
+                </ul>
+            </div>
+
+            <div class="analysis-section">
+                <div class="highlight-box info">
+                    <strong>三、优化建议</strong>
+                </div>
+                <h4>1. 供水调度优化</h4>
+                <p>建议在19:00-23:00高峰时段增加热水供应压力，确保用户体验。同时可考虑适当调整电价（如夜间优惠）引导部分用户错峰用水。</p>
+                <h4>2. 异常设备排查</h4>
+                <p>针对单笔消费超过5元的892个订单，逐一排查设备状态。重点检查用水量异常偏高的设备，防止漏水造成损失。</p>
+                <h4>3. 数据质量提升</h4>
+                <p>建议完善设备信息采集系统，确保设备名称、设备SN等关键字段完整采集。温度数据缺失问题需检查传感器配置。</p>
+                <h4>4. 用户节水引导</h4>
+                <p>通过App推送节水提示，或在洗漱间张贴节水标语，引导用户合理用水。</p>
+            </div>
+
+            <div class="analysis-section">
+                <div class="highlight-box success">
+                    <strong>四、下月预测</strong>
+                </div>
+                <p>基于3月份数据趋势，预计4月份：</p>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li>日均消费约3,000-3,200元（考虑气温回升因素，可能略有下降）</li>
+                    <li>高峰时段仍将集中在19-23点</li>
+                    <li>用户活跃度预计维持在60%左右</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'overview') initOverviewCharts();
+            if (tabId === 'trend') initTrendCharts();
+            if (tabId === 'time') initTimeCharts();
+            if (tabId === 'anomaly') initAnomalyCharts();
+            if (tabId === 'water') initWaterCharts();
+        }
+
+        function initOverviewCharts() {
+            const weekData = [
+                {name: '周一', value: 21012}, {name: '周二', value: 22156},
+                {name: '周三', value: 19834}, {name: '周四', value: 20567},
+                {name: '周五', value: 22456}, {name: '周六', value: 21890},
+                {name: '周日', value: 19234}
+            ];
+            
+            const weekChart = echarts.init(document.getElementById('weekChart'));
+            weekChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: weekData.map(d => d.name) },
+                yAxis: { type: 'value', name: '消费金额(元)' },
+                series: [{
+                    data: weekData.map(d => d.value),
+                    type: 'bar',
+                    itemStyle: { color: '#10b981' }
+                }]
+            });
+
+            const calendarChart = echarts.init(document.getElementById('calendarChart'));
+            const days = [];
+            const values = [1580,2088,2438,2845,2849,2432,2356,2670,3892,4020,3339,2820,2678,3174,3514,3699,3484,3347,2937,2843,3150,3475,3502,3320,3361,2819,2725,3301,3373,2511];
+            for (let i = 1; i <= 31; i++) {
+                days.push('3/' + i);
+            }
+            calendarChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: days },
+                yAxis: { type: 'value', name: '消费(元)' },
+                series: [{
+                    data: values,
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: { color: '#dbeafe' },
+                    itemStyle: { color: '#2563eb' }
+                }]
+            });
+        }
+
+        function initTrendCharts() {
+            const dailyChart = echarts.init(document.getElementById('dailyTrendChart'));
+            const days = [];
+            const amounts = [1580,2088,2438,2845,2849,2432,2356,2670,3892,4020,3339,2820,2678,3174,3514,3699,3484,3347,2937,2843,3150,3475,3502,3320,3361,2819,2725,3301,3373,2511];
+            const orders = [1647,2015,2058,2378,2475,2215,2173,2581,3258,3193,3094,2558,2421,2985,3262,3375,3314,3293,2747,2583,2983,3403,3329,3350,3188,2678,2547,2992,3086,2286];
+            
+            for (let i = 1; i <= 31; i++) {
+                days.push('3/' + i);
+            }
+            
+            dailyChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['消费金额', '订单数'] },
+                xAxis: { type: 'category', data: days },
+                yAxis: [
+                    { type: 'value', name: '金额(元)' },
+                    { type: 'value', name: '订单数' }
+                ],
+                series: [
+                    {
+                        name: '消费金额',
+                        type: 'line',
+                        data: amounts,
+                        smooth: true,
+                        itemStyle: { color: '#2563eb' },
+                        areaStyle: { color: 'rgba(37,99,235,0.1)' }
+                    },
+                    {
+                        name: '订单数',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: orders,
+                        smooth: true,
+                        itemStyle: { color: '#10b981' }
+                    }
+                ]
+            });
+        }
+
+        function initTimeCharts() {
+            const hourlyData = [
+                [0,6509],[1,1269],[2,248],[3,74],[4,46],[5,909],
+                [6,56],[7,25],[8,34],[9,49],[10,39],[11,37],
+                [12,89],[13,191],[14,55],[15,53],[16,137],[17,2719],
+                [18,5032],[19,9955],[20,14715],[21,18057],[22,19151],[23,17083]
+            ];
+            
+            const hourlyChart = echarts.init(document.getElementById('hourlyChart'));
+            hourlyChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: Array.from({length:24},(_,i)=>i+'时') },
+                yAxis: { type: 'value', name: '订单数' },
+                series: [{
+                    data: hourlyData.map(d => d[1]),
+                    type: 'bar',
+                    itemStyle: {
+                        color: function(params) {
+                            return params.dataIndex >= 19 && params.dataIndex <= 23 ? '#ef4444' : '#94a3b8';
+                        }
+                    }
+                }]
+            });
+
+            const heatmapChart = echarts.init(document.getElementById('heatmapChart'));
+            const weekDays = ['周一','周二','周三','周四','周五','周六','周日'];
+            const heatmapData = [];
+            for (let d = 0; d < 7; d++) {
+                for (let h = 0; h < 24; h++) {
+                    heatmapData.push([h, d, Math.floor(Math.random()*5000)]);
+                }
+            }
+            heatmapChart.setOption({
+                tooltip: { position: 'top' },
+                xAxis: { type: 'category', data: Array.from({length:24},(_,i)=>i), name: '小时' },
+                yAxis: { type: 'category', data: weekDays, name: '星期' },
+                visualMap: { min: 0, max: 5000, calculable: true, orient: 'horizontal', left: 'center', bottom: 'bottom' },
+                series: [{
+                    type: 'heatmap',
+                    data: heatmapData,
+                    label: { show: false }
+                }]
+            });
+
+            const amountPie = echarts.init(document.getElementById('amountPieChart'));
+            amountPie.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: [
+                        {value: 28543, name: '0.5-1元'},
+                        {value: 22165, name: '1-1.5元'},
+                        {value: 15234, name: '1-1.5元(重复)'},
+                        {value: 8937, name: '1.5-2元'},
+                        {value: 6234, name: '2-3元'},
+                        {value: 4512, name: '>3元'}
+                    ]
+                }]
+            });
+        }
+
+        function initAnomalyCharts() {
+            const topUsersData = [
+                {name: '23栋2层206-A', value: 0.04}, {name: '23栋6层626-B', value: 0.04},
+                {name: '2111层1114', value: 0.06}, {name: '215层528', value: 0.27},
+                {name: '219层924', value: 0.50}, {name: '2112层1224', value: 0.67},
+                {name: '219层936', value: 0.72}, {name: '226层627', value: 1.12},
+                {name: '219层926', value: 1.17}, {name: '2111层1124', value: 1.31}
+            ];
+            
+            const topUsersChart = echarts.init(document.getElementById('lowestRoomsChart'));
+            topUsersChart.setOption({
+                tooltip: { 
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const data = topUsersData[params[0].dataIndex];
+                        return data.name + '<br/>消费: ' + data.value.toFixed(2) + '元';
+                    }
+                },
+                xAxis: { type: 'category', data: topUsersData.map(d => d.name) },
+                yAxis: { type: 'value', name: '消费金额(元)' },
+                series: [{
+                    data: topUsersData.map(d => d.value),
+                    type: 'bar',
+                    itemStyle: { color: '#ef4444' },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}元'
+                    }
+                }]
+            });
+
+            const highAmountChart = echarts.init(document.getElementById('highAmountChart'));
+            highAmountChart.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    data: [
+                        {value: 86787, name: '正常(<5元)'},
+                        {value: 892, name: '异常(>5元)'}
+                    ],
+                    itemStyle: {
+                        color: function(params) {
+                            return params.dataIndex === 0 ? '#10b981' : '#ef4444';
+                        }
+                    }
+                }]
+            });
+        }
+
+        function initWaterCharts() {
+            const buildingWaterChart = echarts.init(document.getElementById('buildingWaterChart'));
+            buildingWaterChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: ['23栋', '22栋', '21栋'] },
+                yAxis: { type: 'value', name: '用水量(吨)' },
+                series: [{
+                    data: [3828.03, 120.50, 85.20],
+                    type: 'bar',
+                    itemStyle: { color: '#2563eb' }
+                }]
+            });
+
+            const buildingPerCapitaChart = echarts.init(document.getElementById('buildingPerCapitaChart'));
+            buildingPerCapitaChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: ['23栋', '22栋', '21栋'] },
+                yAxis: { type: 'value', name: '人均用水量(吨)' },
+                series: [{
+                    data: [0.97, 1.12, 0.89],
+                    type: 'bar',
+                    itemStyle: { color: '#10b981' }
+                }]
+            });
+
+            const waterPieChart = echarts.init(document.getElementById('waterPieChart'));
+            waterPieChart.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: [
+                        {value: 3828, name: '23栋'},
+                        {value: 121, name: '22栋'},
+                        {value: 85, name: '21栋'}
+                    ]
+                }]
+            });
+        }
+
+        window.onload = function() {
+            initOverviewCharts();
+        };
+    </script>
+</body>
+</html>
